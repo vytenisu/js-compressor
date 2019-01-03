@@ -56,9 +56,22 @@ export class Lazifier extends Cli {
 	private lazifyFiles( fileMap: IFileMap ) {
 		Object.entries( fileMap ).forEach( ( [inputFile, outputFile] ) => {
 			this.ensureDirectoryExists( outputFile )
-			this.lazifyFile( inputFile, outputFile )
+
+			if ( inputFile.endsWith( `.${SUPPORTED_EXTENSION}` ) ) {
+				this.lazifyFile( inputFile, outputFile )
+			} else {
+				this.copyFile( inputFile, outputFile )
+			}
+
 			this.increaseProgress()
 		})
+
+		process.stdout.write( '\n\nOperation completed!\n\n' )
+	}
+
+	private copyFile( from: string, to: string ) {
+		const data = fs.readFileSync( from, { encoding: 'utf-8' })
+		fs.writeFileSync( to, data, { encoding: 'utf-8' } )
 	}
 
 	private ensureDirectoryExists( outputFile: string ) {
@@ -76,9 +89,11 @@ export class Lazifier extends Cli {
 		}
 	}
 
+	/*
 	private filterSources( files: string[] ) {
 		return files.filter( file => file.endsWith( `.${SUPPORTED_EXTENSION}` ) )
 	}
+	*/
 
 	private filterOutIgnored( files: string[] ) {
 		const expressions = this.getArgument( 'exclude' )
@@ -102,7 +117,6 @@ export class Lazifier extends Cli {
 				if ( err ) {
 					reject( err )
 				} else {
-					files = this.filterSources( files )
 					files = this.filterOutIgnored( files )
 					resolve( files )
 				}
@@ -119,7 +133,6 @@ export class Lazifier extends Cli {
 			return esprima.parseModule(code, { loc: true })
 		} catch ( e ) {
 			if ( !filePath ) {
-				console.log( `Fatal error when parsing: ${filePath}\n\n` )
 				throw e
 			}
 
@@ -152,9 +165,9 @@ export class Lazifier extends Cli {
 	}
 
 	private lazifyFile( inputPath: string, outputPath: string ) {
-		let code = fs.readFileSync( inputPath, { encoding: 'utf-8' } )
+		const initialCode = fs.readFileSync( inputPath, { encoding: 'utf-8' } )
 
-		code = this.minifyCode( inputPath, code )
+		let code = this.minifyCode( inputPath, initialCode )
 
 		let changed = true
 
@@ -214,7 +227,13 @@ export class Lazifier extends Cli {
 		}
 
 		code = this.minifyCode( inputPath, code )
-		fs.writeFileSync( outputPath, code, { encoding: 'utf-8' } )
+
+		try {
+			this.parseToAst( code )
+			fs.writeFileSync( outputPath, code, { encoding: 'utf-8' } )
+		} catch ( e ) {
+			fs.writeFileSync( outputPath, initialCode, { encoding: 'utf-8' } )
+		}
 	}
 
 }
