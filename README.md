@@ -5,6 +5,7 @@ by Vytenis Urbonavicius
 ## Purpose
 
 **_js-lazifier_** is a tool for converting JS files to make them parse-able in a lazy way.
+**WARNING:** - this is currently experimental!!!
 
 <span style="color: red">NOT FINISHED</span>
 
