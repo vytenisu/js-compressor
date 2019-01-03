@@ -1,0 +1,32 @@
+{
+	"compilerOptions": {
+		"module": "esnext",
+		"lib": [
+			"esnext"
+		],
+		"target": "es2017",
+		"moduleResolution": "Node",
+		"sourceMap": true,
+		"strict": true,
+		"experimentalDecorators": true,
+		"noImplicitReturns": true,
+		"skipLibCheck": true,
+		"noImplicitAny": true,
+		"allowSyntheticDefaultImports": true,
+		"allowUnreachableCode": false,
+		"typeRoots": [
+			"./node_modules/@types"
+		]
+	},
+	"include": [
+		"./**/*.ts"
+	],
+	"exclude": [
+		"**/*.test.ts",
+		"node_modules",
+		"bower_components",
+		"cache",
+		"build",
+		"static"
+	]
+}
