@@ -1,2 +1,1 @@
-import { Lazifier } from './lib/lazifier'
-const lazifier = new Lazifier()
+export { Lazifier } from './lib/lazifier'

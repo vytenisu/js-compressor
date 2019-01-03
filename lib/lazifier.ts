@@ -5,19 +5,20 @@ import * as mkdirp from 'mkdirp'
 import * as path from 'path'
 import recursive from 'recursive-readdir'
 import * as Terser from 'terser'
+import { ICliArguments } from '../output/lib/cli.interfaces'
 import { Cli } from './cli'
+import { IFileMap, ILazifierArgs } from './lazifier.interfaces'
 
-const MIN_FUNCTION_SIZE = 100
 const SUPPORTED_EXTENSION = 'js'
-
-export interface IFileMap {
-	[inputFile: string]: string
-}
 
 export class Lazifier extends Cli {
 
-	public constructor() {
-		super()
+	public constructor( options: ILazifierArgs = {} ) {
+		super( !!options.cli )
+
+		Object.keys( options ).forEach( key => {
+			this.setArgument( key as ICliArguments, (options as any)[key] )
+		} )
 
 		this.getTargetFiles().then( files => {
 			const fileMap = this.prepareFileMap( files )
@@ -66,7 +67,7 @@ export class Lazifier extends Cli {
 			this.increaseProgress()
 		})
 
-		process.stdout.write( '\n\nOperation completed!\n\n' )
+		this.displayCompleted()
 	}
 
 	private copyFile( from: string, to: string ) {
@@ -119,7 +120,10 @@ export class Lazifier extends Cli {
 	}
 
 	private minifyCode( inputPath: string, code: string ) {
-		return Terser.minify( { [inputPath]: code } ).code || ''
+		return Terser.minify( { [inputPath]: code }, {
+			keep_classnames: true,
+			keep_fnames: true,
+		} ).code || ''
 	}
 
 	private parseToAst( code: string, filePath?: string ) {
@@ -185,7 +189,7 @@ export class Lazifier extends Cli {
 					]
 
 					if ( node.type === 'BlockStatement' && allowedParents.includes( parent.type ) ) {
-						if ( this.getNodeEnd( node, 0 ) - this.getNodeStart( node, 0 ) >= MIN_FUNCTION_SIZE ) {
+						if ( this.getNodeEnd( node, 0 ) - this.getNodeStart( node, 0 ) >= this.getArgument( 'min' ) ) {
 							if ( !parsedPositions.includes( this.getNodeStart( node, 0 ) ) ) {
 								parsedPositions.push( this.getNodeStart( node, 0 ) )
 								throw { type: 'break', node }
@@ -204,7 +208,7 @@ export class Lazifier extends Cli {
 						this.getNodeEnd( e.node, offset ) - 1,
 					)
 
-					const lazifiedFragment = `return eval('(function(){${this.escapeString( codeFragment )}})()')`
+					const lazifiedFragment = `return eval('(function(){${this.escapeString( codeFragment )}}).apply(this)')`
 
 					code =
 						code.substring( 0, this.getNodeStart( e.node, offset ) + 1 ) +

@@ -1,1 +1,1 @@
-export type ICliArguments = 'path' | 'output' | 'exclude'
+export type ICliArguments = 'path' | 'output' | 'exclude' | 'min'

@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"description": "CLI tool for minimizing JS file size",
 	"homepage": "https://github.com/vytenisu/js-compressor",
-	"main": "dist/index.js",
+	"main": "dist/cli.js",
 	"bin": {
 		"js-lazifier": "./dist/index.js"
 	},

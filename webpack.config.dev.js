@@ -2,7 +2,10 @@ const webpack = require('webpack')
 const nodeExternals = require('webpack-node-externals')
 
 const exportedConfig = {
-	entry: __dirname + '/index.ts',
+	entry: {
+		index: __dirname + '/index.ts',
+		cli: __dirname + '/cli.ts'
+	},
 	target: 'node',
 	externals: [nodeExternals()],
 	devtool: 'inline-source-map',
@@ -12,8 +15,8 @@ const exportedConfig = {
 	},
 	output: {
 		path: __dirname + '/dist',
-		filename: 'index.js',
-		sourceMapFilename: 'index.js.map',
+		filename: '[name].js',
+		sourceMapFilename: '[name].js.map',
 		libraryTarget: 'commonjs2'
 	},
 	resolveLoader: {
