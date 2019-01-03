@@ -51,7 +51,7 @@ export class Cli {
 	}
 
 	public showProgress( total: number ) {
-		this.progress = new Progress( 'Lazifying [:bar] :percent :etas', { total } )
+		this.progress = new Progress( 'Lazifying [:bar] :percent (:current/:total) :etas', { total } )
 	}
 
 	public increaseProgress() {

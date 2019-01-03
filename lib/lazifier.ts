@@ -143,6 +143,14 @@ export class Lazifier extends Cli {
 		return escaped
 	}
 
+	private getNodeStart( node: esprima.Token, offset: number ) {
+		return ( node as any).loc.start.column + offset
+	}
+
+	private getNodeEnd( node: esprima.Token, offset: number ) {
+		return ( node as any).loc.end.column + offset
+	}
+
 	private lazifyFile( inputPath: string, outputPath: string ) {
 		let code = fs.readFileSync( inputPath, { encoding: 'utf-8' } )
 
@@ -151,11 +159,13 @@ export class Lazifier extends Cli {
 		let changed = true
 
 		const parsedPositions: number[] = []
-		let ast = this.parseToAst( code, inputPath )
+		const ast = this.parseToAst( code, inputPath )
 
 		if ( !ast ) {
-			// fs.writeFileSync( outputPath, code, { encoding: 'utf-8' } )
+			fs.writeFileSync( outputPath, code, { encoding: 'utf-8' } )
 		}
+
+		let offset = 0
 
 		while ( changed ) {
 			changed = false
@@ -168,26 +178,33 @@ export class Lazifier extends Cli {
 					]
 
 					if ( node.type === 'BlockStatement' && allowedParents.includes( parent.type ) ) {
-						if ( !parsedPositions.includes( ( node as any).loc.start.column ) ) {
-							parsedPositions.push( ( node as any).loc.start.column )
-							throw { type: 'break', node }
+						if ( this.getNodeEnd( node, 0 ) - this.getNodeStart( node, 0 ) >= MIN_FUNCTION_SIZE ) {
+							if ( !parsedPositions.includes( this.getNodeStart( node, 0 ) ) ) {
+								parsedPositions.push( this.getNodeStart( node, 0 ) )
+								throw { type: 'break', node }
+							} else {
+								return false
+							}
 						}
 					}
+
+					return true
 				} } )
 			} catch ( e ) {
 				if ( e && e.type === 'break' ) {
-					const codeFragment = code.substring( e.node.loc.start.column + 1, e.node.loc.end.column - 1 )
+					const codeFragment = code.substring(
+						this.getNodeStart( e.node, offset ) + 1,
+						this.getNodeEnd( e.node, offset ) - 1,
+					)
 
-					if ( codeFragment.length > MIN_FUNCTION_SIZE ) {
-						const lazifiedFragment = `return eval('(function(){${this.escapeString( codeFragment )}})()')`
+					const lazifiedFragment = `return eval('(function(){${this.escapeString( codeFragment )}})()')`
 
-						code =
-							code.substring( 0, e.node.loc.start.column + 1 ) +
-							lazifiedFragment +
-							code.substring( e.node.loc.end.column - 1 )
+					code =
+						code.substring( 0, this.getNodeStart( e.node, offset ) + 1 ) +
+						lazifiedFragment +
+						code.substring( this.getNodeEnd( e.node, offset ) - 1 )
 
-						ast = this.parseToAst( code )
-					}
+					offset += ( lazifiedFragment.length - codeFragment.length )
 
 					changed = true
 				} else {
@@ -197,7 +214,7 @@ export class Lazifier extends Cli {
 		}
 
 		code = this.minifyCode( inputPath, code )
-		// fs.writeFileSync( outputPath, code, { encoding: 'utf-8' } )
+		fs.writeFileSync( outputPath, code, { encoding: 'utf-8' } )
 	}
 
 }
