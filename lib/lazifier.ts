@@ -89,12 +89,6 @@ export class Lazifier extends Cli {
 		}
 	}
 
-	/*
-	private filterSources( files: string[] ) {
-		return files.filter( file => file.endsWith( `.${SUPPORTED_EXTENSION}` ) )
-	}
-	*/
-
 	private filterOutIgnored( files: string[] ) {
 		const expressions = this.getArgument( 'exclude' )
 
