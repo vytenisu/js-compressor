@@ -180,27 +180,37 @@ export class Lazifier extends Cli {
 
 		while ( changed ) {
 			changed = false
+			const stack: string[] = []
+
+			// TODO: recursively parse eval content for large functions
+			// TODO: cache evaluated function
 
 			try {
-				traverse( ast, { pre: ( node: esprima.Token, parent: esprima.Token ) => {
-					const allowedParents = [
-						'FunctionExpression',
-						'ArrowFunctionExpression',
-					]
+				traverse( ast, {
+					pre: ( node: esprima.Token, parent: esprima.Token ) => {
+						const allowedParents = [
+							'FunctionExpression',
+							'ArrowFunctionExpression',
+						]
 
-					if ( node.type === 'BlockStatement' && allowedParents.includes( parent.type ) ) {
-						if ( this.getNodeEnd( node, 0 ) - this.getNodeStart( node, 0 ) >= this.getArgument( 'min' ) ) {
-							if ( !parsedPositions.includes( this.getNodeStart( node, 0 ) ) ) {
-								parsedPositions.push( this.getNodeStart( node, 0 ) )
-								throw { type: 'break', node }
-							} else {
-								return false
+						if ( node.type === 'BlockStatement' && allowedParents.includes( parent.type ) ) {
+							if ( this.getNodeEnd( node, 0 ) - this.getNodeStart( node, 0 ) >= this.getArgument( 'min' ) ) {
+								if ( !parsedPositions.includes( this.getNodeStart( node, 0 ) ) ) {
+									parsedPositions.push( this.getNodeStart( node, 0 ) )
+									throw { type: 'break', node }
+								} else {
+									return false
+								}
 							}
 						}
-					}
 
-					return true
-				} } )
+						stack.push( node.type )
+						return true
+					},
+					post: () => {
+						stack.pop()
+					},
+				} )
 			} catch ( e ) {
 				if ( e && e.type === 'break' ) {
 					const codeFragment = code.substring(
