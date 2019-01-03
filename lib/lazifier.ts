@@ -1,6 +1,7 @@
 import traverse from 'ast-traverse'
 import * as esprima from 'esprima'
 import * as fs from 'fs'
+import * as mkdirp from 'mkdirp'
 import * as path from 'path'
 import recursive from 'recursive-readdir'
 import * as Terser from 'terser'
@@ -54,9 +55,15 @@ export class Lazifier extends Cli {
 
 	private lazifyFiles( fileMap: IFileMap ) {
 		Object.entries( fileMap ).forEach( ( [inputFile, outputFile] ) => {
+			this.ensureDirectoryExists( outputFile )
 			this.lazifyFile( inputFile, outputFile )
 			this.increaseProgress()
 		})
+	}
+
+	private ensureDirectoryExists( outputFile: string ) {
+		const dir = path.dirname( outputFile )
+		mkdirp.sync( dir )
 	}
 
 	private async getTargetFiles(): Promise<string[]> {

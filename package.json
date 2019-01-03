@@ -41,6 +41,7 @@
 		"@types/args": "^3.0.0",
 		"@types/esprima": "^4.0.2",
 		"@types/jest": "^23.3.10",
+		"@types/mkdirp": "^0.5.2",
 		"@types/progress": "^2.0.3",
 		"@types/recursive-readdir": "^2.2.0",
 		"@types/terser": "^3.8.0",
@@ -63,6 +64,7 @@
 		"ast-traverse": "^0.1.1",
 		"esprima": "^4.0.1",
 		"lz-string": "^1.4.4",
+		"mkdirp": "^0.5.1",
 		"progress": "^2.0.3",
 		"recursive-readdir": "^2.2.2",
 		"terser": "^3.14.0"
