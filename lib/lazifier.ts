@@ -5,7 +5,7 @@ import * as mkdirp from 'mkdirp'
 import * as path from 'path'
 import recursive from 'recursive-readdir'
 import * as Terser from 'terser'
-import { ICliArguments } from '../output/lib/cli.interfaces'
+import { ICliArguments } from '../lib/cli.interfaces'
 import { Cli } from './cli'
 import { IFileMap, ILazifierArgs } from './lazifier.interfaces'
 
