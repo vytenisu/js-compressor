@@ -10,8 +10,12 @@ import { Cli } from './cli'
 import { IFileMap, ILazifierArgs } from './lazifier.interfaces'
 
 const SUPPORTED_EXTENSION = 'js'
+const GLOBAL_VARIABLE_NAME = '_lf'
+const LOCAL_VARIABLE_NAME = '_lf'
 
 export class Lazifier extends Cli {
+
+	private uniqueId = 0
 
 	public constructor( options: ILazifierArgs = {} ) {
 		super( !!options.cli )
@@ -162,8 +166,7 @@ export class Lazifier extends Cli {
 		return ( node as any).loc.end.column + offset
 	}
 
-	private lazifyFile( inputPath: string, outputPath: string ) {
-		const initialCode = fs.readFileSync( inputPath, { encoding: 'utf-8' } )
+	private lazifyCode( initialCode: string, inputPath: string ) {
 
 		let code = this.minifyCode( inputPath, initialCode )
 
@@ -173,7 +176,7 @@ export class Lazifier extends Cli {
 		const ast = this.parseToAst( code, inputPath )
 
 		if ( !ast ) {
-			fs.writeFileSync( outputPath, code, { encoding: 'utf-8' } )
+			return code
 		}
 
 		let offset = 0
@@ -218,7 +221,19 @@ export class Lazifier extends Cli {
 						this.getNodeEnd( e.node, offset ) - 1,
 					)
 
-					const lazifiedFragment = `return eval('(function(){${this.escapeString( codeFragment )}}).apply(this)')`
+					const uniqueId = this.uniqueId++
+
+					const cache = `${LOCAL_VARIABLE_NAME}.${GLOBAL_VARIABLE_NAME}`
+
+					const lazifiedFragment =
+						`const ${LOCAL_VARIABLE_NAME}=global?global:window;` +
+						`${cache}=${cache}||{};` +
+						`if(!${cache}[${uniqueId}])` +
+						`${cache}[${uniqueId}]=` +
+						`eval('(function(){${this.escapeString( codeFragment )}})');` +
+						`return ${cache}[${uniqueId}].apply(this);`
+
+					// const lazifiedFragment = `return eval('(function(){${this.escapeString( codeFragment )}}).apply(this)')`
 
 					code =
 						code.substring( 0, this.getNodeStart( e.node, offset ) + 1 ) +
@@ -238,10 +253,17 @@ export class Lazifier extends Cli {
 
 		try {
 			this.parseToAst( code )
-			fs.writeFileSync( outputPath, code, { encoding: 'utf-8' } )
+			return code
 		} catch ( e ) {
-			fs.writeFileSync( outputPath, initialCode, { encoding: 'utf-8' } )
+			return initialCode
 		}
+
+	}
+
+	private lazifyFile( inputPath: string, outputPath: string ) {
+		const initialCode = fs.readFileSync( inputPath, { encoding: 'utf-8' } )
+		const code = this.lazifyCode( initialCode, inputPath )
+		fs.writeFileSync( outputPath, code, { encoding: 'utf-8' } )
 	}
 
 }
