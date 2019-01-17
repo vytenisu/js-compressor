@@ -13,7 +13,7 @@ export class Cli {
 		path: path.resolve(process.cwd()),
 		output: path.resolve(process.cwd(), 'output'),
 		exclude: '',
-		min: 50,
+		min: 100,
 	}
 
 	public constructor( cli = true ) {

@@ -10,12 +10,8 @@ import { Cli } from './cli'
 import { IFileMap, ILazifierArgs } from './lazifier.interfaces'
 
 const SUPPORTED_EXTENSION = 'js'
-const GLOBAL_VARIABLE_NAME = '_lf'
-const LOCAL_VARIABLE_NAME = '_lf'
 
 export class Lazifier extends Cli {
-
-	private uniqueId = 0
 
 	public constructor( options: ILazifierArgs = {} ) {
 		super( !!options.cli )
@@ -130,9 +126,13 @@ export class Lazifier extends Cli {
 		} ).code || ''
 	}
 
-	private parseToAst( code: string, filePath?: string ) {
+	private parseToAst( code: string, filePath?: string, fragment = false ) {
 		try {
-			return esprima.parseModule(code, { loc: true })
+			if ( fragment ) {
+				return esprima.parseScript(code, { loc: true })
+			} else {
+				return esprima.parseModule(code, { loc: true })
+			}
 		} catch ( e ) {
 			if ( !filePath ) {
 				throw e
@@ -166,44 +166,49 @@ export class Lazifier extends Cli {
 		return ( node as any).loc.end.column + offset
 	}
 
-	private lazifyCode( initialCode: string, inputPath: string ) {
-
-		let code = this.minifyCode( inputPath, initialCode )
+	private lazifyCode( initialCode: string, inputPath: string, fragment = false ) {
+		let code = fragment ? initialCode : this.minifyCode( inputPath, initialCode )
 
 		let changed = true
-
 		const parsedPositions: number[] = []
-		const ast = this.parseToAst( code, inputPath )
+
+		const ast = this.parseToAst( code, inputPath, fragment )
 
 		if ( !ast ) {
 			return code
 		}
 
 		let offset = 0
+		let minPosition = 0
+		let firstBlock = true
 
 		while ( changed ) {
 			changed = false
 			const stack: string[] = []
-
-			// TODO: recursively parse eval content for large functions
-			// TODO: cache evaluated function
 
 			try {
 				traverse( ast, {
 					pre: ( node: esprima.Token, parent: esprima.Token ) => {
 						const allowedParents = [
 							'FunctionExpression',
+							'FunctionDeclaration',
 							'ArrowFunctionExpression',
 						]
 
 						if ( node.type === 'BlockStatement' && allowedParents.includes( parent.type ) ) {
-							if ( this.getNodeEnd( node, 0 ) - this.getNodeStart( node, 0 ) >= this.getArgument( 'min' ) ) {
-								if ( !parsedPositions.includes( this.getNodeStart( node, 0 ) ) ) {
-									parsedPositions.push( this.getNodeStart( node, 0 ) )
-									throw { type: 'break', node }
-								} else {
-									return false
+							if ( !fragment || !firstBlock ) {
+								if ( this.getNodeStart( node, 0 ) >= minPosition ) {
+									if ( this.getNodeEnd( node, 0 ) - this.getNodeStart( node, 0 ) >= this.getArgument( 'min' ) ) {
+										if ( !parsedPositions.includes( this.getNodeStart( node, 0 ) ) ) {
+											parsedPositions.push( this.getNodeStart( node, 0 ) )
+											throw { type: 'break', node }
+										} else {
+											return false
+										}
+									}
 								}
+							} else if ( fragment ) {
+								firstBlock = false
 							}
 						}
 
@@ -216,31 +221,33 @@ export class Lazifier extends Cli {
 				} )
 			} catch ( e ) {
 				if ( e && e.type === 'break' ) {
-					const codeFragment = code.substring(
+					const initialCodeFragment = code.substring(
 						this.getNodeStart( e.node, offset ) + 1,
 						this.getNodeEnd( e.node, offset ) - 1,
 					)
 
-					const uniqueId = this.uniqueId++
+					let codeFragment = initialCodeFragment
 
-					const cache = `${LOCAL_VARIABLE_NAME}.${GLOBAL_VARIABLE_NAME}`
+					const wrapPrefix = '(function(){'
+					const wrapPostfix = '})()'
+					const wrappedCodeFragment = `${wrapPrefix}${codeFragment}${wrapPostfix}`
 
-					const lazifiedFragment =
-						`const ${LOCAL_VARIABLE_NAME}=global?global:window;` +
-						`${cache}=${cache}||{};` +
-						`if(!${cache}[${uniqueId}])` +
-						`${cache}[${uniqueId}]=` +
-						`eval('(function(){${this.escapeString( codeFragment )}})');` +
-						`return ${cache}[${uniqueId}].apply(this);`
+					const lazifiedInnerCode = this.lazifyCode( wrappedCodeFragment, inputPath, true )
 
-					// const lazifiedFragment = `return eval('(function(){${this.escapeString( codeFragment )}}).apply(this)')`
+					if ( lazifiedInnerCode !== wrappedCodeFragment ) {
+						codeFragment = lazifiedInnerCode.substring( wrapPrefix.length, lazifiedInnerCode.length - wrapPostfix.length )
+					}
+
+					const lazifiedFragment = `return eval('(function(){${this.escapeString( codeFragment )}})').apply(this);`
 
 					code =
 						code.substring( 0, this.getNodeStart( e.node, offset ) + 1 ) +
 						lazifiedFragment +
 						code.substring( this.getNodeEnd( e.node, offset ) - 1 )
 
-					offset += ( lazifiedFragment.length - codeFragment.length )
+					const additionalOffset = lazifiedFragment.length - initialCodeFragment.length
+					minPosition += this.getNodeEnd( e.node, 0 )
+					offset += additionalOffset
 
 					changed = true
 				} else {
@@ -249,10 +256,12 @@ export class Lazifier extends Cli {
 			}
 		}
 
-		code = this.minifyCode( inputPath, code )
+		if ( !fragment ) {
+			code = this.minifyCode( inputPath, code )
+		}
 
 		try {
-			this.parseToAst( code )
+			this.parseToAst( code, undefined, fragment )
 			return code
 		} catch ( e ) {
 			return initialCode
