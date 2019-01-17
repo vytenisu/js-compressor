@@ -1,11 +1,11 @@
 {
-	"name": "js-lazifier",
+	"name": "js-lazyfire",
 	"version": "1.0.0",
 	"description": "CLI tool for minimizing JS file size",
 	"homepage": "https://github.com/vytenisu/js-compressor",
 	"main": "dist/cli.js",
 	"bin": {
-		"js-lazifier": "./dist/index.js"
+		"lazyfire": "./dist/cli.js"
 	},
 	"scripts": {
 		"prepublishOnly": "npm run lint && npm run test && npm run build && npm run dts && npm run docs",
