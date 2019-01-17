@@ -28,7 +28,10 @@ export class Lazifier extends Cli {
 	}
 
 	private prepareFileMap( files: string[] ) {
-		const input = this.getArgument( 'path' )
+		let input = this.getArgument( 'path' )
+		input = path.resolve( input )
+		input = '.' ? '' : input
+
 		const output = this.getArgument( 'output' )
 
 		if ( this.inputIsFile() ) {
@@ -40,7 +43,7 @@ export class Lazifier extends Cli {
 			const fileMap: IFileMap = {}
 
 			files.forEach( file => {
-				const relativeFile = file.substring( input.length + 1 )
+				const relativeFile = file.substring( input.length )
 				const outputFile = path.resolve( output, relativeFile )
 				fileMap[file] = outputFile
 			} )
