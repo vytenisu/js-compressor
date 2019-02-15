@@ -14,7 +14,7 @@ This has potential to improve initial load time of the application.
 - _eval_ is optimized in JS engine of choice
 - launching application does not require most of the code to be executed at once
 
-**Important!** Before making a decision to use **_JS LazyFire_** in your project, please make sure your application is tested to verify cost on runtime performance.
+**Important!** Before making a decision to use **_JS LazyFire_** in your project, please make sure your application is tested to verify cost on runtime performance and whether code still works correctly.
 
 ## How it works
 
