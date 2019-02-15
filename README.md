@@ -2,6 +2,8 @@
 
 by Vytenis Urbonavičius
 
+<span style="color: red">**WARNING:**</span> - this package is an experiment - benefits are not proven!
+
 ## Purpose
 
 **_JS LazyFire_** is a tool for converting JS files to make them parse-able in a lazy way.
@@ -11,8 +13,6 @@ This has potential to improve initial load time of the application.
 
 - _eval_ is optimized in JS engine of choice
 - launching application does not require most of the code to be executed at once
-
-<span style="color: red">**WARNING:**</span> - this package is currently experimental - benefits are not proven!
 
 **Important!** Before making a decision to use **_JS LazyFire_** in your project, please make sure your application is tested to verify cost on runtime performance.
 
