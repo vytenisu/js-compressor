@@ -24,7 +24,7 @@ This has potential to improve initial load time of the application.
 - AST is used to extract body of large functions
 - Bodies of large functions are put into closures and wrapped using _eval_.
 
-Current method of selecting which functions to transform by their code size is not optimal because well-written projects may only have small well-decoupled methods. However, this method is fit for some projects and allows to verify the concept. Algorithm has place for improvement.
+Current method of selecting which functions to transform by their code size is not optimal because well-written projects may only have small well-decoupled methods. However, this method is fit for some projects and allows to verify the concept. Algorithm is in POC state and has a lot of place for improvement.
 
 ## Installation
 
