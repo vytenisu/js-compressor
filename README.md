@@ -2,7 +2,7 @@
 
 by Vytenis Urbonavičius
 
-<span style="color: red">**WARNING:**</span> - this package is an experiment - benefits are not proven!
+<span style="color: red">**WARNING:**</span> - this package is an experiment. Benefits are not proven at this time.
 
 ## Purpose
 
@@ -24,6 +24,13 @@ This has potential to improve initial load time of the application.
 - Bodies of large functions are put into closures and wrapped using _eval_.
 
 Current method of selecting which functions to transform by their code size is not optimal because well-written projects may only have small well-decoupled methods. However, this method is fit for some projects and allows to verify the concept. Algorithm has place for improvement.
+
+## Installation
+
+```bash
+git clone git@github.com:vytenisu/lazyfire.git
+npm install
+```
 
 ## CLI usage
 
@@ -51,7 +58,3 @@ Some of the available additional parameters:
 - **-o** - output path
 - **-m** - minimum size of function body in characters to qualify for transformation
 - _more information available when running command without parameters_
-
-## Module usage
-
-<span style="color: red">NOT FINISHED</span>
