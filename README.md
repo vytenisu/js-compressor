@@ -2,7 +2,8 @@
 
 by Vytenis Urbonavičius
 
-<span style="color: red">**WARNING:**</span> - this package is an experiment. Benefits are not proven at this time.
+<span style="color: red">**WARNING:**</span>
+This package is an experiment. Benefits are not proven at this time.
 
 ## Purpose
 
